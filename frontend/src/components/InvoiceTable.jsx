@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 
-export function InvoiceTable({ invoices, loading, error }) {
+export function InvoiceTable({ invoices, loading, error, onEdit }) {
   if (loading) {
     return (
       <div className="py-10 text-center text-slate-500">
@@ -102,16 +102,14 @@ export function InvoiceTable({ invoices, loading, error }) {
 
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
-                  <Link
-                    to={`/invoices/${invoice.invoiceId}/edit`}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit?.(invoice)}
                   >
-                    <Button
-                      variant="outline"
-                      size="sm"
-                    >
-                      Edit
-                    </Button>
-                  </Link>
+                    Edit
+                  </Button>
 
                   <Link
                     to={`/customers/${invoice.customerId?._id}`}

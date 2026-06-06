@@ -1,13 +1,27 @@
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getCustomers } from "@/api/customers";
 import { getInvoices } from "@/api/invoices";
 import { InvoiceFilters } from "@/components/InvoiceFilters";
+import { InvoiceFormModal } from "@/components/InvoiceFormModal";
 import { InvoiceTable } from "@/components/InvoiceTable";
 import { PaginationControls } from "@/components/PaginationControls";
+import { Button } from "@/components/ui/Button";
 
 export default function HomePage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { invoiceId: routeInvoiceId } = useParams();
+
   const [invoices, setInvoices] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [invoiceModal, setInvoiceModal] = useState({
+    open: false,
+    mode: "create",
+    invoiceId: null,
+    initialInvoice: null,
+  });
 
   const [meta, setMeta] = useState({
     total: 0,
@@ -29,6 +43,48 @@ export default function HomePage() {
     sortBy: "issueDate",
     sortOrder: "desc",
   });
+
+  useEffect(() => {
+    if (location.pathname === "/invoices/new") {
+      setInvoiceModal({
+        open: true,
+        mode: "create",
+        invoiceId: null,
+        initialInvoice: null,
+      });
+      return;
+    }
+
+    if (routeInvoiceId && location.pathname.endsWith("/edit")) {
+      const initialInvoice =
+        invoices.find((invoice) => invoice.invoiceId === routeInvoiceId) ??
+        null;
+
+      setInvoiceModal({
+        open: true,
+        mode: "edit",
+        invoiceId: routeInvoiceId,
+        initialInvoice,
+      });
+    }
+  }, [location.pathname, routeInvoiceId, invoices]);
+
+  const closeInvoiceModal = () => {
+    setInvoiceModal({
+      open: false,
+      mode: "create",
+      invoiceId: null,
+      initialInvoice: null,
+    });
+
+    if (location.pathname !== "/") {
+      navigate("/");
+    }
+  };
+
+  const handleInvoiceSaved = () => {
+    setRefreshKey((current) => current + 1);
+  };
 
   // Load customers once
   useEffect(() => {
@@ -99,7 +155,7 @@ export default function HomePage() {
     };
 
     fetchInvoices();
-  }, [page, filters]);
+  }, [page, filters, refreshKey]);
 
   const handleFiltersChange = (newFilters) => {
     setFilters(newFilters);
@@ -108,14 +164,30 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto max-w-7xl p-4 md:p-8">
-      <header className="mb-6 flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Invoice Management Dashboard
-        </h1>
+      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Invoice Management Dashboard
+          </h1>
 
-        <p className="text-sm text-slate-500">
-          {meta.total} invoices total
-        </p>
+          <p className="text-sm text-slate-500">
+            {meta.total} invoices total
+          </p>
+        </div>
+
+        <Button
+          type="button"
+          onClick={() =>
+            setInvoiceModal({
+              open: true,
+              mode: "create",
+              invoiceId: null,
+              initialInvoice: null,
+            })
+          }
+        >
+          Create Invoice
+        </Button>
       </header>
 
       <InvoiceFilters
@@ -128,6 +200,24 @@ export default function HomePage() {
         invoices={invoices}
         loading={loading}
         error={error}
+        onEdit={(invoice) =>
+          setInvoiceModal({
+            open: true,
+            mode: "edit",
+            invoiceId: invoice.invoiceId,
+            initialInvoice: invoice,
+          })
+        }
+      />
+
+      <InvoiceFormModal
+        open={invoiceModal.open}
+        mode={invoiceModal.mode}
+        invoiceId={invoiceModal.invoiceId}
+        initialInvoice={invoiceModal.initialInvoice}
+        customers={customers}
+        onClose={closeInvoiceModal}
+        onSuccess={handleInvoiceSaved}
       />
 
       {!loading && !error && (
