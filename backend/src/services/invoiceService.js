@@ -3,7 +3,14 @@ import Invoice from "../models/Invoice.js";
 import Customer from "../models/Customer.js";
 
 const ALLOWED_STATUSES = new Set(["Sent", "Unpaid", "Overdue", "Paid", "Void", "Draft"]);
-const ALLOWED_SORT_BY = new Set(["amount", "dueDate", "issueDate"]);
+const ALLOWED_SORT_BY = new Set([
+    "amount",
+    "dueDate",
+    "issueDate",
+    "invoiceId",
+    "total",
+    "customerName",
+]);
 const ALLOWED_ORDER = new Set(["asc", "desc"]);
 const MAX_LIMIT = 100;
 const DEFAULT_PAGE = 1;
@@ -116,6 +123,125 @@ const parseDateRange = (fromValue, toValue, fieldName) => {
     return range;
 };
 
+const buildSortDirection = (order) => (order === "asc" ? 1 : -1);
+
+const buildInvoiceSort = (sortBy, order) => {
+    const direction = buildSortDirection(order);
+
+    if (sortBy === "customerName") {
+        return { "customer.name": direction };
+    }
+
+    return { [sortBy]: direction };
+};
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const buildSearchCondition = async (searchValue) => {
+    const term = searchValue.trim();
+    if (!term) {
+        return null;
+    }
+
+    const regex = new RegExp(escapeRegex(term), "i");
+    const matchingCustomers = await Customer.find({
+        $or: [{ name: regex }, { company: regex }],
+    })
+        .select("_id")
+        .lean();
+
+    const customerIds = matchingCustomers.map((customer) => customer._id);
+    const orConditions = [{ invoiceId: regex }];
+
+    if (customerIds.length > 0) {
+        orConditions.push({ customerId: { $in: customerIds } });
+    }
+
+    return { $or: orConditions };
+};
+
+const combineFilters = (baseFilters, searchCondition) => {
+    if (!searchCondition) {
+        return baseFilters;
+    }
+
+    if (Object.keys(baseFilters).length === 0) {
+        return searchCondition;
+    }
+
+    return { $and: [baseFilters, searchCondition] };
+};
+
+const toObjectIdFilter = (filters) => {
+    if (!filters || typeof filters !== "object") {
+        return filters;
+    }
+
+    if (Array.isArray(filters.$and)) {
+        return {
+            ...filters,
+            $and: filters.$and.map((condition) => toObjectIdFilter(condition)),
+        };
+    }
+
+    const match = { ...filters };
+
+    if (match.customerId && typeof match.customerId === "string") {
+        match.customerId = new mongoose.Types.ObjectId(match.customerId);
+    }
+
+    return match;
+};
+
+const projectInvoiceWithCustomer = {
+    _id: 1,
+    invoiceId: 1,
+    amount: 1,
+    taxRate: 1,
+    tax: 1,
+    total: 1,
+    status: 1,
+    issueDate: 1,
+    dueDate: 1,
+    createdAt: 1,
+    updatedAt: 1,
+    customerId: {
+        _id: "$customer._id",
+        name: "$customer.name",
+        company: "$customer.company",
+    },
+};
+
+const listInvoicesWithCustomerSort = async ({
+    filters,
+    sortBy,
+    order,
+    page,
+    limit,
+}) => {
+    const match = toObjectIdFilter(filters);
+    const sort = buildInvoiceSort(sortBy, order);
+
+    const data = await Invoice.aggregate([
+        { $match: match },
+        {
+            $lookup: {
+                from: "customers",
+                localField: "customerId",
+                foreignField: "_id",
+                as: "customer",
+            },
+        },
+        { $unwind: "$customer" },
+        { $sort: sort },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        { $project: projectInvoiceWithCustomer },
+    ]);
+
+    return data;
+};
+
 export const listInvoices = async (query) => {
     const page = parsePositiveInt(normalizeValue(query.page, "page"), "page", DEFAULT_PAGE);
     const limitInput = parsePositiveInt(
@@ -179,6 +305,23 @@ export const listInvoices = async (query) => {
         filters.dueDate = dueDateRange;
     }
 
+    const taxRateValue = normalizeValue(query.taxRate, "taxRate");
+    if (taxRateValue !== undefined && taxRateValue !== "") {
+        const taxRate = Number(taxRateValue);
+        if (!Number.isFinite(taxRate) || !ALLOWED_TAX_RATES.has(taxRate)) {
+            throw createQueryError(`Invalid taxRate value: ${taxRateValue}`);
+        }
+        filters.taxRate = taxRate;
+    }
+
+    const searchValue = normalizeValue(query.search, "search");
+    const searchCondition =
+        searchValue !== undefined && searchValue.trim()
+            ? await buildSearchCondition(String(searchValue))
+            : null;
+
+    const invoiceFilters = combineFilters(filters, searchCondition);
+
     const sortByValue = normalizeValue(query.sortBy, "sortBy");
     const orderValue = normalizeValue(query.order, "order");
 
@@ -192,18 +335,25 @@ export const listInvoices = async (query) => {
         throw createQueryError(`Invalid order value: ${order}`);
     }
 
-    const sort = { [sortBy]: order === "asc" ? 1 : -1 };
-
-    const total = await Invoice.countDocuments(filters);
+    const total = await Invoice.countDocuments(invoiceFilters);
     const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
 
-    const data = await Invoice.find(filters)
-        .select("-__v")
-        .populate("customerId", "name company")
-        .sort(sort)
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .lean();
+    const data =
+        sortBy === "customerName"
+            ? await listInvoicesWithCustomerSort({
+                  filters: invoiceFilters,
+                  sortBy,
+                  order,
+                  page,
+                  limit,
+              })
+            : await Invoice.find(invoiceFilters)
+                  .select("-__v")
+                  .populate("customerId", "name company")
+                  .sort(buildInvoiceSort(sortBy, order))
+                  .skip((page - 1) * limit)
+                  .limit(limit)
+                  .lean();
 
     return {
         data,
