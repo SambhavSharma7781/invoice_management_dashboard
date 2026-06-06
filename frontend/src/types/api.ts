@@ -54,6 +54,21 @@ export type CustomerStatusChip = "Paid" | "Unpaid" | "Overdue" | "Draft";
 
 export type CustomerStatusCounts = Record<CustomerStatusChip, number>;
 
+export interface TopCustomerSummary {
+  customer: Customer;
+  totalRevenue: number;
+  totalInvoices: number;
+  paidRevenue: number;
+  pendingRevenue: number;
+}
+
+export interface GlobalSummaryMetrics {
+  totalBilled: number;
+  totalTax: number;
+  invoiceCount: number;
+  customerCount: number;
+}
+
 export interface InvoiceCustomerRef {
   _id: string;
   name: string;

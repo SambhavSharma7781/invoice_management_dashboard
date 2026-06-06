@@ -50,3 +50,18 @@ export async function updateInvoice(
   );
   return data;
 }
+
+export async function fetchAllInvoices(): Promise<Invoice[]> {
+  const allInvoices: Invoice[] = [];
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const response = await getInvoices({ page, limit: 100 });
+    allInvoices.push(...response.data);
+    totalPages = response.meta.totalPages;
+    page += 1;
+  } while (page <= totalPages);
+
+  return allInvoices;
+}

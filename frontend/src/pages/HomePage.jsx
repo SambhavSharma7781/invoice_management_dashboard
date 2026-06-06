@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { getCustomers } from "@/api/customers";
 import { getInvoices } from "@/api/invoices";
 import { InvoiceFilters } from "@/components/InvoiceFilters";
@@ -175,19 +175,26 @@ export default function HomePage() {
           </p>
         </div>
 
-        <Button
-          type="button"
-          onClick={() =>
-            setInvoiceModal({
-              open: true,
-              mode: "create",
-              invoiceId: null,
-              initialInvoice: null,
-            })
-          }
-        >
-          Create Invoice
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/summary">
+            <Button type="button" variant="outline">
+              Summary
+            </Button>
+          </Link>
+          <Button
+            type="button"
+            onClick={() =>
+              setInvoiceModal({
+                open: true,
+                mode: "create",
+                invoiceId: null,
+                initialInvoice: null,
+              })
+            }
+          >
+            Create Invoice
+          </Button>
+        </div>
       </header>
 
       <InvoiceFilters
