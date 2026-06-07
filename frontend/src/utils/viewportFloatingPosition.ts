@@ -13,10 +13,6 @@ export interface AnchorPlacement {
   maxHeight: number;
 }
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
-}
-
 export function getMaxMenuHeight(
   viewportHeight: number,
   availableSpace: number,
@@ -64,77 +60,4 @@ export function computeAnchorPlacement(
   }
 
   return { openAbove, alignEnd, width, maxHeight };
-}
-
-/** @deprecated Use computeAnchorPlacement for document-relative anchoring. */
-export interface FloatingRect {
-  top: number;
-  left: number;
-  width: number;
-  maxHeight: number;
-  placement: "above" | "below";
-}
-
-/** @deprecated Fixed positioning helper — prefer computeAnchorPlacement. */
-export function computeFloatingPosition(
-  trigger: DOMRect,
-  preferredWidth: number,
-  viewportWidth: number,
-  viewportHeight: number,
-  align: HorizontalAlign = "start"
-): FloatingRect {
-  const placement = computeAnchorPlacement(
-    trigger,
-    preferredWidth,
-    viewportWidth,
-    viewportHeight,
-    align
-  );
-
-  const spaceBelow =
-    viewportHeight - VIEWPORT_MARGIN - trigger.bottom - FLOATING_GAP;
-  const spaceAbove = trigger.top - VIEWPORT_MARGIN - FLOATING_GAP;
-
-  let top =
-    placement.openAbove
-      ? trigger.top - FLOATING_GAP - placement.maxHeight
-      : trigger.bottom + FLOATING_GAP;
-
-  top = clamp(
-    top,
-    VIEWPORT_MARGIN,
-    viewportHeight - VIEWPORT_MARGIN - placement.maxHeight
-  );
-
-  let left = placement.alignEnd
-    ? trigger.right - placement.width
-    : trigger.left;
-
-  left = clamp(
-    left,
-    VIEWPORT_MARGIN,
-    viewportWidth - placement.width - VIEWPORT_MARGIN
-  );
-
-  return {
-    top,
-    left,
-    width: placement.width,
-    maxHeight: placement.maxHeight,
-    placement: placement.openAbove ? "above" : "below",
-  };
-}
-
-export function isRectFullyInViewport(
-  rect: { x: number; y: number; width: number; height: number },
-  viewportWidth: number,
-  viewportHeight: number,
-  margin = VIEWPORT_MARGIN
-) {
-  return (
-    rect.x >= margin - 1 &&
-    rect.y >= margin - 1 &&
-    rect.x + rect.width <= viewportWidth - margin + 1 &&
-    rect.y + rect.height <= viewportHeight - margin + 1
-  );
 }

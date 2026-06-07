@@ -60,13 +60,6 @@ export interface TopCustomerSummary {
   pendingRevenue: number;
 }
 
-export interface GlobalSummaryMetrics {
-  totalBilled: number;
-  totalTax: number;
-  invoiceCount: number;
-  customerCount: number;
-}
-
 export interface InvoiceCustomerRef {
   _id: string;
   name: string;

@@ -7,9 +7,7 @@ const port = process.env.PORT || 4000;
 const startServer = async () => {
   try {
     await connectToDatabase();
-    app.listen(port, () => {
-      console.log(`Server listening on port ${port}`);
-    });
+    app.listen(port);
   } catch (error) {
     console.error("Failed to start server", error);
     process.exit(1);
