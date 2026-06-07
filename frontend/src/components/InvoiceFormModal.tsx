@@ -15,6 +15,7 @@ import {
   formValuesToPayload,
   getApiErrorMessage,
   getDefaultFormValues,
+  getStatusBadgeClassName,
   INVOICE_STATUS_OPTIONS,
   invoiceToFormValues,
   TAX_RATE_OPTIONS,
@@ -497,6 +498,7 @@ export function InvoiceFormModal({
                 value={activeFormValues.status}
                 onChange={(status) => updateField("status", status)}
                 disabled={submitting || customers.length === 0}
+                getActiveClassName={getStatusBadgeClassName}
               />
             ) : (
               <ViewportSelect
@@ -505,6 +507,7 @@ export function InvoiceFormModal({
                 onChange={(status) => updateField("status", status)}
                 disabled={submitting || customers.length === 0}
                 className={fieldClassName}
+                getValueClassName={getStatusBadgeClassName}
                 options={INVOICE_STATUS_OPTIONS.map((status) => ({
                   value: status,
                   label: status,

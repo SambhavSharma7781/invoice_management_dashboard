@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { getCustomers } from "@/api/customers";
 import { getInvoices } from "@/api/invoices";
@@ -6,6 +6,7 @@ import { InvoiceFilters } from "@/components/InvoiceFilters";
 import { InvoiceFormModal } from "@/components/InvoiceFormModal";
 import { InvoiceTable } from "@/components/InvoiceTable";
 import { PaginationControls } from "@/components/PaginationControls";
+import { GlobalMetricCards } from "@/components/summary/GlobalMetricCards";
 import { Button } from "@/components/ui/Button";
 import { getFriendlyApiErrorMessage } from "@/utils/apiErrors";
 
@@ -71,10 +72,10 @@ export default function HomePage() {
     totalPages: 1,
   });
 
-  const [totalInvoices, setTotalInvoices] = useState(null);
-
   const [loading, setLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState(null);
+  const hasLoadedInvoicesRef = useRef(false);
 
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
@@ -138,23 +139,10 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const loadTotalInvoices = async () => {
-      try {
-        const response = await getInvoices({ page: 1, limit: 1 });
-        setTotalInvoices(response.meta?.total ?? 0);
-      } catch (err) {
-        console.error("Failed to load total invoice count:", err);
-      }
-    };
-
-    loadTotalInvoices();
-  }, [refreshKey]);
-
-  useEffect(() => {
     const fetchInvoices = async () => {
-      const isInitialLoad = invoices.length === 0;
-
-      if (isInitialLoad) {
+      if (hasLoadedInvoicesRef.current) {
+        setIsFetching(true);
+      } else {
         setLoading(true);
       }
 
@@ -207,6 +195,7 @@ export default function HomePage() {
         const response = await getInvoices(params);
 
         setInvoices(response.data || []);
+        hasLoadedInvoicesRef.current = true;
 
         setMeta({
           total: response.meta?.total || 0,
@@ -217,6 +206,7 @@ export default function HomePage() {
         setError(getFriendlyApiErrorMessage(err));
       } finally {
         setLoading(false);
+        setIsFetching(false);
       }
     };
 
@@ -264,22 +254,22 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto min-w-0 max-w-7xl p-4 md:p-8">
-      <header className="mb-6 sm:mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+      <header className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
           Invoice Management Dashboard
         </h1>
-        {totalInvoices != null ? (
-          <p className="mt-1 text-sm text-slate-500">
-            {totalInvoices.toLocaleString("en-IN")} invoices total
-          </p>
-        ) : null}
+        <p className="mt-1 text-sm text-slate-500">
+          Powerplay · Invoice Tracker
+        </p>
       </header>
+
+      <GlobalMetricCards refreshKey={refreshKey} className="mb-6 sm:mb-8" />
 
       <div className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm">
         <header className="flex flex-col gap-4 border-b border-slate-100 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+          <h2 className="text-lg font-semibold tracking-tight text-slate-900">
             Invoices
-          </h1>
+          </h2>
 
           <div className="flex w-full flex-wrap gap-2 sm:w-auto">
             <Link to="/summary">
@@ -322,6 +312,7 @@ export default function HomePage() {
         <InvoiceTable
           invoices={invoices}
           loading={loading}
+          fetching={isFetching}
           error={error}
           onRetry={handleRetry}
           onEdit={(invoice) =>
@@ -337,7 +328,7 @@ export default function HomePage() {
           onSort={handleSort}
         />
 
-        {!loading && !error && (
+        {!error && (
           <PaginationControls
             page={page}
             totalPages={meta.totalPages}

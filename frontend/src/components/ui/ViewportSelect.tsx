@@ -28,6 +28,7 @@ interface ViewportSelectProps {
   className?: string;
   align?: HorizontalAlign;
   preferredWidth?: number;
+  getValueClassName?: (value: string) => string;
 }
 
 const scrollListClassName =
@@ -44,6 +45,7 @@ export function ViewportSelect({
   className,
   align = "start",
   preferredWidth,
+  getValueClassName,
 }: ViewportSelectProps) {
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<ReturnType<
@@ -144,7 +146,15 @@ export function ViewportSelect({
           className
         )}
       >
-        <span className="min-w-0 truncate">
+        <span
+          className={cn(
+            "min-w-0 truncate",
+            selectedOption &&
+              getValueClassName &&
+              "inline-flex w-fit max-w-full items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+            selectedOption && getValueClassName?.(value)
+          )}
+        >
           {selectedOption?.label ?? (
             <span className="text-slate-400">{placeholder}</span>
           )}

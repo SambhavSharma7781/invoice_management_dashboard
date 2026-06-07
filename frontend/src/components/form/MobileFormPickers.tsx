@@ -47,6 +47,7 @@ interface OptionPickerProps<T extends string> {
   onChange: (value: T) => void;
   disabled?: boolean;
   formatLabel?: (value: T) => string;
+  getActiveClassName?: (value: T) => string;
 }
 
 export function MobileOptionPicker<T extends string>({
@@ -55,20 +56,29 @@ export function MobileOptionPicker<T extends string>({
   onChange,
   disabled = false,
   formatLabel = (option) => option,
+  getActiveClassName,
 }: OptionPickerProps<T>) {
   return (
     <div className="flex flex-wrap gap-2">
-      {options.map((option) => (
-        <button
-          key={option}
-          type="button"
-          disabled={disabled}
-          className={chipClass(value === option)}
-          onClick={() => onChange(option)}
-        >
-          {formatLabel(option)}
-        </button>
-      ))}
+      {options.map((option) => {
+        const isActive = value === option;
+
+        return (
+          <button
+            key={option}
+            type="button"
+            disabled={disabled}
+            className={
+              isActive && getActiveClassName
+                ? `cursor-pointer rounded-lg border px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${getActiveClassName(option)}`
+                : chipClass(isActive)
+            }
+            onClick={() => onChange(option)}
+          >
+            {formatLabel(option)}
+          </button>
+        );
+      })}
     </div>
   );
 }

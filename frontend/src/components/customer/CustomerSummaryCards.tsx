@@ -1,3 +1,5 @@
+import { AlertCircle, FileText, IndianRupee, TrendingUp } from "lucide-react";
+import { MetricCard } from "@/components/summary/MetricCard";
 import { formatCurrency } from "@/utils/customer";
 
 interface CustomerSummaryCardsProps {
@@ -6,27 +8,6 @@ interface CustomerSummaryCardsProps {
   outstanding: number;
   invoiceCount: number;
   taxLoading?: boolean;
-}
-
-interface SummaryCardProps {
-  label: string;
-  value: string;
-  loading?: boolean;
-}
-
-function SummaryCard({ label, value, loading = false }: SummaryCardProps) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-4">
-      <p className="text-sm text-slate-500">{label}</p>
-      {loading ? (
-        <div className="mt-2 h-8 w-28 animate-pulse rounded bg-slate-200" />
-      ) : (
-        <p className="mt-1 break-words text-xl font-semibold tracking-tight text-slate-900 tabular-nums sm:text-2xl">
-          {value}
-        </p>
-      )}
-    </div>
-  );
 }
 
 export function CustomerSummaryCards({
@@ -38,16 +19,30 @@ export function CustomerSummaryCards({
 }: CustomerSummaryCardsProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <SummaryCard label="Total billed" value={formatCurrency(totalBilled)} />
-      <SummaryCard
+      <MetricCard
+        label="Total billed"
+        value={formatCurrency(totalBilled)}
+        icon={IndianRupee}
+        iconColor="blue"
+      />
+      <MetricCard
         label="Total tax"
         value={totalTax == null ? "—" : formatCurrency(totalTax)}
         loading={taxLoading}
+        icon={TrendingUp}
+        iconColor="green"
       />
-      <SummaryCard label="Outstanding" value={formatCurrency(outstanding)} />
-      <SummaryCard
-        label="# Invoices"
+      <MetricCard
+        label="Outstanding"
+        value={formatCurrency(outstanding)}
+        icon={AlertCircle}
+        iconColor="red"
+      />
+      <MetricCard
+        label="Invoices"
         value={String(invoiceCount)}
+        icon={FileText}
+        iconColor="purple"
       />
     </div>
   );

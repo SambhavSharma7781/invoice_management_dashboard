@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   fetchAllCustomerInvoices,
@@ -6,6 +6,7 @@ import {
 } from "@/api/customers";
 import { CustomerInvoiceHistory } from "@/components/customer/CustomerInvoiceHistory";
 import { CustomerStatusChips } from "@/components/customer/CustomerStatusChips";
+import { CustomerStatusMixChart } from "@/components/customer/CustomerStatusMixChart";
 import { CustomerSummaryCards } from "@/components/customer/CustomerSummaryCards";
 import { PaginationControls } from "@/components/PaginationControls";
 import { Button } from "@/components/ui/Button";
@@ -29,11 +30,14 @@ export default function CustomerPage() {
   const [totalTax, setTotalTax] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [statsLoading, setStatsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedDetailRef = useRef(false);
 
   useEffect(() => {
     setPage(1);
+    hasLoadedDetailRef.current = false;
   }, [slug]);
 
   useEffect(() => {
@@ -46,7 +50,11 @@ export default function CustomerPage() {
     let cancelled = false;
 
     const loadCustomerPage = async () => {
-      setLoading(true);
+      if (hasLoadedDetailRef.current) {
+        setIsFetching(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
 
       try {
@@ -57,6 +65,7 @@ export default function CustomerPage() {
 
         if (!cancelled) {
           setDetail(response.data);
+          hasLoadedDetailRef.current = true;
         }
       } catch (err) {
         if (!cancelled) {
@@ -66,6 +75,7 @@ export default function CustomerPage() {
       } finally {
         if (!cancelled) {
           setLoading(false);
+          setIsFetching(false);
         }
       }
     };
@@ -129,7 +139,7 @@ export default function CustomerPage() {
       <div className="container mx-auto min-w-0 max-w-7xl p-4 md:p-8">
         <div className="mb-6 h-4 w-40 animate-pulse rounded bg-slate-200" />
         <div className="mb-8 flex items-center gap-4">
-          <div className="h-16 w-16 animate-pulse rounded-full bg-slate-200" />
+          <div className="h-20 w-20 animate-pulse rounded-full bg-slate-200" />
           <div className="space-y-2">
             <div className="h-6 w-48 animate-pulse rounded bg-slate-200" />
             <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
@@ -194,11 +204,11 @@ export default function CustomerPage() {
       </nav>
 
       <header className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-blue-100 text-lg font-semibold text-blue-700">
+        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xl font-semibold text-white">
           {initials}
         </div>
         <div className="min-w-0">
-          <h1 className="break-words text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+          <h1 className="break-words text-2xl font-bold tracking-tight text-slate-900">
             {customer.name}
           </h1>
           <p className="mt-1 break-words text-sm text-slate-500">{customer.company}</p>
@@ -219,6 +229,14 @@ export default function CustomerPage() {
         <CustomerStatusChips counts={statusCounts} loading={statsLoading} />
       </section>
 
+      <section className="mb-8">
+        <CustomerStatusMixChart
+          counts={statusCounts}
+          metrics={metrics}
+          loading={statsLoading}
+        />
+      </section>
+
       <section>
         <h2 className="mb-4 text-lg font-semibold text-slate-900">
           Invoice history
@@ -227,10 +245,11 @@ export default function CustomerPage() {
         <CustomerInvoiceHistory
           invoices={invoices.data}
           loading={loading}
+          fetching={isFetching}
           error={error}
         />
 
-        {!loading && !error && (
+        {!error && (
           <PaginationControls
             page={page}
             totalPages={invoices.meta.totalPages}

@@ -11,6 +11,31 @@ export const INVOICE_STATUS_OPTIONS = [
   "Void",
 ] as const;
 
+export type InvoiceStatus = (typeof INVOICE_STATUS_OPTIONS)[number];
+
+const STATUS_BADGE_CLASS_NAMES: Record<InvoiceStatus, string> = {
+  Paid: "border-transparent bg-green-100 text-green-700",
+  Overdue:
+    "border-transparent bg-red-100 text-red-800 font-bold ring-1 ring-red-200",
+  Unpaid: "border-transparent bg-amber-100 text-amber-700",
+  Sent: "border-transparent bg-blue-100 text-blue-700",
+  Draft: "border-transparent bg-purple-100 text-purple-700",
+  Void: "border-transparent bg-gray-100 text-gray-700",
+};
+
+export const getStatusBadgeClassName = (status: string): string =>
+  STATUS_BADGE_CLASS_NAMES[status as InvoiceStatus] ??
+  "border-transparent bg-slate-100 text-slate-700";
+
+export const STATUS_CHART_COLORS: Record<InvoiceStatus, string> = {
+  Paid: "#16a34a",
+  Overdue: "#dc2626",
+  Unpaid: "#d97706",
+  Sent: "#2563eb",
+  Draft: "#7c3aed",
+  Void: "#6b7280",
+};
+
 export const roundCurrency = (value: number): number =>
   Math.round((value + Number.EPSILON) * 100) / 100;
 

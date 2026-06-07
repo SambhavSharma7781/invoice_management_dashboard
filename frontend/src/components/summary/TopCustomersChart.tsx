@@ -8,6 +8,14 @@ interface TopCustomersChartProps {
   error?: string | null;
 }
 
+const BAR_COLORS = [
+  "bg-blue-500",
+  "bg-green-500",
+  "bg-amber-500",
+  "bg-red-500",
+  "bg-purple-500",
+] as const;
+
 function ChartRowSkeleton() {
   return (
     <div className="flex items-center gap-4 py-3">
@@ -61,11 +69,12 @@ export function TopCustomersChart({
       </h2>
 
       <div className="divide-y divide-slate-100">
-        {customers.map((entry) => {
+        {customers.map((entry, index) => {
           const widthPercent =
             maxRevenue > 0
               ? Math.max((entry.totalRevenue / maxRevenue) * 100, 4)
               : 0;
+          const barColor = BAR_COLORS[index % BAR_COLORS.length];
 
           return (
             <div
@@ -81,7 +90,7 @@ export function TopCustomersChart({
 
               <div className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-100">
                 <div
-                  className="h-full rounded-full bg-blue-400 transition-all duration-300"
+                  className={`h-full rounded-full ${barColor}`}
                   style={{ width: `${widthPercent}%` }}
                 />
               </div>

@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { customerNameToSlug } from "@/utils/customer";
+import { getStatusBadgeClassName } from "@/utils/invoice";
+import { cn } from "@/utils/cn";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
 import { Badge } from "@/components/ui/Badge";
@@ -31,6 +33,7 @@ function SortableHeader({ label, active, direction, onClick }) {
 export function InvoiceTable({
   invoices,
   loading,
+  fetching = false,
   error,
   onRetry,
   onEdit,
@@ -38,7 +41,7 @@ export function InvoiceTable({
   sortOrder,
   onSort,
 }) {
-  if (loading) {
+  if (loading && !invoices?.length) {
     return (
       <div className="px-6 py-12 text-center text-sm text-slate-500">
         Loading invoices...
@@ -46,7 +49,7 @@ export function InvoiceTable({
     );
   }
 
-  if (error) {
+  if (error && !invoices?.length) {
     return <ErrorState message={error} onRetry={onRetry} />;
   }
 
@@ -66,7 +69,10 @@ export function InvoiceTable({
   };
 
   return (
-    <Table containerClassName="px-4 sm:px-6" className="min-w-[720px]">
+    <Table
+      containerClassName={cn("px-4 sm:px-6", fetching && "opacity-50")}
+      className="min-w-[720px]"
+    >
         <TableHeader>
           <TableRow className="border-b border-slate-100 bg-slate-50/80 hover:bg-slate-50/80">
             <TableHead className="px-4 py-3">
@@ -111,7 +117,10 @@ export function InvoiceTable({
 
         <TableBody>
           {invoices.map((invoice) => (
-            <TableRow key={invoice._id} className="border-b border-slate-100">
+            <TableRow
+              key={invoice._id}
+              className="border-b border-slate-100 hover:bg-slate-50"
+            >
               <TableCell className="px-4 py-3 font-medium text-slate-900">
                 {invoice.invoiceId}
               </TableCell>
@@ -134,8 +143,7 @@ export function InvoiceTable({
 
               <TableCell className="px-4 py-3">
                 <Badge
-                  variant={invoice.status === "Paid" ? "default" : "outline"}
-                  className="rounded-full"
+                  className={`rounded-full ${getStatusBadgeClassName(invoice.status)}`}
                 >
                   {invoice.status}
                 </Badge>

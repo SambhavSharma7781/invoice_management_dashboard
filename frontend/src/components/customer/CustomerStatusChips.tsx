@@ -1,5 +1,7 @@
+import { Badge } from "@/components/ui/Badge";
 import type { CustomerStatusCounts } from "@/types/api";
 import { getVisibleStatusCounts } from "@/utils/customer";
+import { getStatusBadgeClassName } from "@/utils/invoice";
 
 interface CustomerStatusChipsProps {
   counts: CustomerStatusCounts | null;
@@ -36,15 +38,13 @@ export function CustomerStatusChips({
   return (
     <div className="flex flex-wrap gap-3">
       {visibleStatuses.map(({ status, count }) => (
-        <div
+        <Badge
           key={status}
-          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700"
+          className={`rounded-full px-4 py-2 text-sm ${getStatusBadgeClassName(status)}`}
         >
-          <span className="font-medium text-slate-900">{status}</span>
-          <span className="rounded-md bg-white px-2 py-0.5 text-xs font-semibold text-slate-600 shadow-sm">
-            {count}
-          </span>
-        </div>
+          <span className="font-medium">{status}</span>
+          <span className="ml-1.5 font-semibold">{count}</span>
+        </Badge>
       ))}
     </div>
   );

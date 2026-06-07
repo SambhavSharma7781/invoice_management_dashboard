@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/Badge";
+import { cn } from "@/utils/cn";
 import {
   Table,
   TableBody,
@@ -8,20 +9,23 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 import type { Invoice } from "@/types/api";
+import { getStatusBadgeClassName } from "@/utils/invoice";
 import { formatCurrency } from "@/utils/customer";
 
 interface CustomerInvoiceHistoryProps {
   invoices: Invoice[];
   loading?: boolean;
+  fetching?: boolean;
   error?: string | null;
 }
 
 export function CustomerInvoiceHistory({
   invoices,
   loading = false,
+  fetching = false,
   error = null,
 }: CustomerInvoiceHistoryProps) {
-  if (loading) {
+  if (loading && invoices.length === 0) {
     return (
       <div className="py-10 text-center text-sm text-slate-500">
         Loading invoice history...
@@ -29,7 +33,7 @@ export function CustomerInvoiceHistory({
     );
   }
 
-  if (error) {
+  if (error && invoices.length === 0) {
     return (
       <div className="py-10 text-center text-sm text-red-600">{error}</div>
     );
@@ -44,7 +48,12 @@ export function CustomerInvoiceHistory({
   }
 
   return (
-    <div className="rounded-xl border border-slate-200">
+    <div
+      className={cn(
+        "rounded-xl border border-slate-200",
+        fetching && "opacity-50"
+      )}
+    >
       <Table containerClassName="min-w-0" className="min-w-[640px]">
         <TableHeader>
           <TableRow className="bg-slate-50 hover:bg-slate-50">
@@ -58,7 +67,7 @@ export function CustomerInvoiceHistory({
         </TableHeader>
         <TableBody>
           {invoices.map((invoice) => (
-            <TableRow key={invoice._id}>
+            <TableRow key={invoice._id} className="hover:bg-slate-50">
               <TableCell className="px-4 font-medium text-slate-900">
                 {invoice.invoiceId}
               </TableCell>
@@ -70,7 +79,7 @@ export function CustomerInvoiceHistory({
               </TableCell>
               <TableCell className="px-4">
                 <Badge
-                  variant={invoice.status === "Paid" ? "default" : "outline"}
+                  className={`rounded-full ${getStatusBadgeClassName(invoice.status)}`}
                 >
                   {invoice.status}
                 </Badge>
