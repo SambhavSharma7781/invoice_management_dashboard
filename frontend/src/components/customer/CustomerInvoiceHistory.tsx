@@ -44,8 +44,8 @@ export function CustomerInvoiceHistory({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200">
-      <Table>
+    <div className="rounded-xl border border-slate-200">
+      <Table containerClassName="min-w-0" className="min-w-[640px]">
         <TableHeader>
           <TableRow className="bg-slate-50 hover:bg-slate-50">
             <TableHead className="px-4">Invoice</TableHead>

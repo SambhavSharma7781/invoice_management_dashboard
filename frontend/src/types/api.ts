@@ -50,9 +50,7 @@ export interface CustomerDetail {
   };
 }
 
-export type CustomerStatusChip = "Paid" | "Unpaid" | "Overdue" | "Draft";
-
-export type CustomerStatusCounts = Record<CustomerStatusChip, number>;
+export type CustomerStatusCounts = Record<InvoiceStatus, number>;
 
 export interface TopCustomerSummary {
   customer: Customer;

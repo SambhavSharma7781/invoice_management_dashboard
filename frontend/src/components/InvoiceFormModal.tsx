@@ -1,9 +1,14 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { createInvoice, getInvoice, updateInvoice } from "@/api/invoices";
+import {
+  MobileCustomerPicker,
+  MobileOptionPicker,
+} from "@/components/form/MobileFormPickers";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import { ViewportSelect } from "@/components/ui/ViewportSelect";
+import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
 import type { Customer, Invoice, InvoiceFormValues } from "@/types/api";
 import {
   calculateTaxAndTotal,
@@ -28,50 +33,50 @@ interface InvoiceFormModalProps {
   onSuccess: () => void;
 }
 
-const labelClassName = "mb-1.5 block text-sm text-slate-500";
+const labelClassName = "mb-1 block text-sm text-slate-500";
 
 const fieldClassName =
-  "h-10 rounded-lg border-slate-300 bg-white text-sm text-slate-900 shadow-none placeholder:text-slate-400 focus-visible:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400";
+  "h-9 rounded-lg border-slate-300 bg-white text-sm text-slate-900 shadow-none placeholder:text-slate-400 focus-visible:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400";
 
 const readOnlyFieldClassName =
-  "h-10 rounded-lg border-slate-200 bg-slate-100 text-sm text-slate-500 shadow-none";
+  "h-9 cursor-default rounded-lg border-slate-200 bg-slate-100 text-sm text-slate-500 shadow-none";
 
 function FormSkeleton() {
   return (
-    <div className="space-y-5 pt-2" aria-busy="true" aria-label="Loading invoice">
+    <div className="space-y-3 pt-1" aria-busy="true" aria-label="Loading invoice">
       <div className="space-y-1.5">
         <div className="h-4 w-20 animate-pulse rounded bg-slate-200" />
-        <div className="h-10 w-full animate-pulse rounded-lg bg-slate-100" />
+        <div className="h-9 w-full animate-pulse rounded-lg bg-slate-100" />
       </div>
       <div className="space-y-1.5">
         <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
-        <div className="h-10 w-full animate-pulse rounded-lg bg-slate-100" />
+        <div className="h-9 w-full animate-pulse rounded-lg bg-slate-100" />
       </div>
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <div className="h-4 w-16 animate-pulse rounded bg-slate-200" />
-          <div className="h-10 w-full animate-pulse rounded-lg bg-slate-100" />
+          <div className="h-9 w-full animate-pulse rounded-lg bg-slate-100" />
         </div>
         <div className="space-y-1.5">
           <div className="h-4 w-16 animate-pulse rounded bg-slate-200" />
-          <div className="h-10 w-full animate-pulse rounded-lg bg-slate-100" />
+          <div className="h-9 w-full animate-pulse rounded-lg bg-slate-100" />
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <div className="h-4 w-20 animate-pulse rounded bg-slate-200" />
-          <div className="h-10 w-full animate-pulse rounded-lg bg-slate-100" />
+          <div className="h-9 w-full animate-pulse rounded-lg bg-slate-100" />
         </div>
         <div className="space-y-1.5">
           <div className="h-4 w-16 animate-pulse rounded bg-slate-200" />
-          <div className="h-10 w-full animate-pulse rounded-lg bg-slate-100" />
+          <div className="h-9 w-full animate-pulse rounded-lg bg-slate-100" />
         </div>
       </div>
       <div className="space-y-1.5">
         <div className="h-4 w-14 animate-pulse rounded bg-slate-200" />
-        <div className="h-10 w-full animate-pulse rounded-lg bg-slate-100" />
+        <div className="h-9 w-full animate-pulse rounded-lg bg-slate-100" />
       </div>
-      <div className="h-11 w-full animate-pulse rounded-lg bg-slate-100" />
+      <div className="h-9 w-full animate-pulse rounded-lg bg-slate-100" />
     </div>
   );
 }
@@ -92,6 +97,7 @@ export function InvoiceFormModal({
   const [loadedInvoiceId, setLoadedInvoiceId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobileViewport();
 
   const isEditMode = mode === "edit";
   const hasInitialInvoice =
@@ -222,7 +228,10 @@ export function InvoiceFormModal({
     event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = event.target;
+    updateField(name, value);
+  };
 
+  const updateField = (name: string, value: string) => {
     setFormValues((previous) => {
       const base =
         loadedInvoiceId === invoiceId
@@ -277,9 +286,41 @@ export function InvoiceFormModal({
   };
 
   const title = isEditMode ? "Edit Invoice" : "New Invoice";
+  const showFormFooter = !isEditLoading && !(error && isEditMode && !isEditDataReady);
+
+  const formFooter = (
+    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onClose}
+        disabled={submitting}
+        className="h-9 w-full min-w-[110px] rounded-lg border-slate-300 bg-white px-6 text-sm font-medium text-slate-700 shadow-none hover:bg-slate-50 sm:w-auto"
+      >
+        Cancel
+      </Button>
+      <Button
+        type="submit"
+        form="invoice-form"
+        disabled={
+          submitting ||
+          (isEditMode && !isEditDataReady) ||
+          customers.length === 0
+        }
+        className="h-9 w-full min-w-[130px] rounded-lg border border-blue-500 bg-white px-6 text-sm font-medium text-blue-600 shadow-none hover:bg-blue-50 disabled:border-slate-200 disabled:text-slate-400 sm:w-auto"
+      >
+        {submitting ? "Saving..." : "Save invoice"}
+      </Button>
+    </div>
+  );
 
   return (
-    <Dialog open={open} onClose={onClose} title={title}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={title}
+      footer={showFormFooter ? formFooter : undefined}
+    >
       {isEditLoading ? (
         <FormSkeleton />
       ) : error && isEditMode && !isEditDataReady ? (
@@ -292,14 +333,14 @@ export function InvoiceFormModal({
               type="button"
               variant="outline"
               onClick={onClose}
-              className="h-10 min-w-[110px] rounded-lg border-slate-300 bg-white px-6 text-sm font-medium text-slate-700 shadow-none hover:bg-slate-50"
+              className="h-9 w-full min-w-[110px] rounded-lg border-slate-300 bg-white px-6 text-sm font-medium text-slate-700 shadow-none hover:bg-slate-50 sm:w-auto"
             >
               Cancel
             </Button>
           </div>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+        <form id="invoice-form" onSubmit={handleSubmit} className="space-y-3">
           {isEditMode && activeDisplayInvoiceId ? (
             <div>
               <label className={labelClassName}>Invoice ID</label>
@@ -320,23 +361,31 @@ export function InvoiceFormModal({
               <p className="text-sm text-slate-500">
                 No customers available. Add customers before creating an invoice.
               </p>
-            ) : (
-              <Select
-                id="customerId"
-                name="customerId"
+            ) : isMobile ? (
+              <MobileCustomerPicker
+                customers={customers}
                 value={activeFormValues.customerId}
-                onChange={handleFieldChange}
+                onChange={(customerId) => updateField("customerId", customerId)}
+                disabled={submitting}
+              />
+            ) : (
+              <ViewportSelect
+                id="customerId"
+                value={activeFormValues.customerId}
+                onChange={(customerId) => updateField("customerId", customerId)}
                 required
                 disabled={submitting}
+                placeholder="Select customer"
                 className={fieldClassName}
-              >
-                <option value="">Select customer</option>
-                {customers.map((customer) => (
-                  <option key={customer._id} value={customer._id}>
-                    {customer.name}
-                  </option>
-                ))}
-              </Select>
+                options={[
+                  { value: "", label: "Select customer" },
+                  ...customers.map((customer) => ({
+                    value: customer._id,
+                    label: customer.name,
+                    description: customer.company,
+                  })),
+                ]}
+              />
             )}
           </div>
 
@@ -354,7 +403,7 @@ export function InvoiceFormModal({
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="amount" className={labelClassName}>
                 Amount
@@ -378,24 +427,31 @@ export function InvoiceFormModal({
               <label htmlFor="taxRate" className={labelClassName}>
                 Tax rate
               </label>
-              <Select
-                id="taxRate"
-                name="taxRate"
-                value={String(activeFormValues.taxRate)}
-                onChange={handleFieldChange}
-                disabled={submitting || customers.length === 0}
-                className={fieldClassName}
-              >
-                {TAX_RATE_OPTIONS.map((rate) => (
-                  <option key={rate} value={rate}>
-                    {rate}%
-                  </option>
-                ))}
-              </Select>
+              {isMobile ? (
+                <MobileOptionPicker
+                  options={TAX_RATE_OPTIONS.map(String)}
+                  value={String(activeFormValues.taxRate)}
+                  onChange={(rate) => updateField("taxRate", rate)}
+                  disabled={submitting || customers.length === 0}
+                  formatLabel={(rate) => `${rate}%`}
+                />
+              ) : (
+                <ViewportSelect
+                  id="taxRate"
+                  value={String(activeFormValues.taxRate)}
+                  onChange={(rate) => updateField("taxRate", rate)}
+                  disabled={submitting || customers.length === 0}
+                  className={fieldClassName}
+                  options={TAX_RATE_OPTIONS.map((rate) => ({
+                    value: String(rate),
+                    label: `${rate}%`,
+                  }))}
+                />
+              )}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="issueDate" className={labelClassName}>
                 Issue date
@@ -435,23 +491,29 @@ export function InvoiceFormModal({
             <label htmlFor="status" className={labelClassName}>
               Status
             </label>
-            <Select
-              id="status"
-              name="status"
-              value={activeFormValues.status}
-              onChange={handleFieldChange}
-              disabled={submitting || customers.length === 0}
-              className={fieldClassName}
-            >
-              {INVOICE_STATUS_OPTIONS.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </Select>
+            {isMobile ? (
+              <MobileOptionPicker
+                options={INVOICE_STATUS_OPTIONS}
+                value={activeFormValues.status}
+                onChange={(status) => updateField("status", status)}
+                disabled={submitting || customers.length === 0}
+              />
+            ) : (
+              <ViewportSelect
+                id="status"
+                value={activeFormValues.status}
+                onChange={(status) => updateField("status", status)}
+                disabled={submitting || customers.length === 0}
+                className={fieldClassName}
+                options={INVOICE_STATUS_OPTIONS.map((status) => ({
+                  value: status,
+                  label: status,
+                }))}
+              />
+            )}
           </div>
 
-          <div className="rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-600">
+          <div className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-600">
             <span>
               Tax{" "}
               <span className="font-medium text-slate-800">
@@ -469,33 +531,11 @@ export function InvoiceFormModal({
           </div>
 
           {error ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
               {error}
             </p>
           ) : null}
 
-          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={submitting}
-              className="h-10 min-w-[110px] rounded-lg border-slate-300 bg-white px-6 text-sm font-medium text-slate-700 shadow-none hover:bg-slate-50"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={
-                submitting ||
-                (isEditMode && !isEditDataReady) ||
-                customers.length === 0
-              }
-              className="h-10 min-w-[130px] rounded-lg border border-blue-500 bg-white px-6 text-sm font-medium text-blue-600 shadow-none hover:bg-blue-50 disabled:border-slate-200 disabled:text-slate-400"
-            >
-              {submitting ? "Saving..." : "Save invoice"}
-            </Button>
-          </div>
         </form>
       )}
     </Dialog>

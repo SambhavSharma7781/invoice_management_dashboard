@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   fetchAllCustomerInvoices,
-  getCustomerById,
+  getCustomerBySlug,
 } from "@/api/customers";
 import { CustomerInvoiceHistory } from "@/components/customer/CustomerInvoiceHistory";
 import { CustomerStatusChips } from "@/components/customer/CustomerStatusChips";
@@ -13,6 +13,7 @@ import type { CustomerDetail, CustomerStatusCounts } from "@/types/api";
 import {
   computeStatusCounts,
   computeTotalTax,
+  createEmptyStatusCounts,
   getApiErrorMessage,
   getCustomerInitials,
 } from "@/utils/customer";
@@ -20,7 +21,7 @@ import {
 const PAGE_LIMIT = 10;
 
 export default function CustomerPage() {
-  const { customerId } = useParams();
+  const { slug } = useParams();
   const [detail, setDetail] = useState<CustomerDetail | null>(null);
   const [statusCounts, setStatusCounts] = useState<CustomerStatusCounts | null>(
     null
@@ -33,11 +34,11 @@ export default function CustomerPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [customerId]);
+  }, [slug]);
 
   useEffect(() => {
-    if (!customerId) {
-      setError("Customer ID is missing.");
+    if (!slug) {
+      setError("Customer slug is missing.");
       setLoading(false);
       return;
     }
@@ -49,7 +50,7 @@ export default function CustomerPage() {
       setError(null);
 
       try {
-        const response = await getCustomerById(customerId, {
+        const response = await getCustomerBySlug(slug, {
           page,
           limit: PAGE_LIMIT,
         });
@@ -74,10 +75,10 @@ export default function CustomerPage() {
     return () => {
       cancelled = true;
     };
-  }, [customerId, page]);
+  }, [slug, page]);
 
   useEffect(() => {
-    if (!customerId) {
+    if (!slug) {
       setStatsLoading(false);
       return;
     }
@@ -90,7 +91,7 @@ export default function CustomerPage() {
       setTotalTax(null);
 
       try {
-        const invoices = await fetchAllCustomerInvoices(customerId);
+        const invoices = await fetchAllCustomerInvoices(slug);
 
         if (!cancelled) {
           setStatusCounts(computeStatusCounts(invoices));
@@ -98,12 +99,7 @@ export default function CustomerPage() {
         }
       } catch {
         if (!cancelled) {
-          setStatusCounts({
-            Paid: 0,
-            Unpaid: 0,
-            Overdue: 0,
-            Draft: 0,
-          });
+          setStatusCounts(createEmptyStatusCounts());
           setTotalTax(0);
         }
       } finally {
@@ -118,19 +114,19 @@ export default function CustomerPage() {
     return () => {
       cancelled = true;
     };
-  }, [customerId]);
+  }, [slug]);
 
-  if (!customerId) {
+  if (!slug) {
     return (
-      <div className="container mx-auto max-w-7xl p-4 md:p-8">
-        <p className="text-sm text-red-600">Customer ID is missing.</p>
+      <div className="container mx-auto min-w-0 max-w-7xl p-4 md:p-8">
+        <p className="text-sm text-red-600">Customer slug is missing.</p>
       </div>
     );
   }
 
   if (loading && !detail) {
     return (
-      <div className="container mx-auto max-w-7xl p-4 md:p-8">
+      <div className="container mx-auto min-w-0 max-w-7xl p-4 md:p-8">
         <div className="mb-6 h-4 w-40 animate-pulse rounded bg-slate-200" />
         <div className="mb-8 flex items-center gap-4">
           <div className="h-16 w-16 animate-pulse rounded-full bg-slate-200" />
@@ -153,7 +149,7 @@ export default function CustomerPage() {
 
   if (error && !detail) {
     return (
-      <div className="container mx-auto max-w-7xl p-4 md:p-8">
+      <div className="container mx-auto min-w-0 max-w-7xl p-4 md:p-8">
         <nav className="mb-6 text-sm text-slate-500">
           <Link to="/" className="hover:text-slate-900">
             Invoices
@@ -181,7 +177,7 @@ export default function CustomerPage() {
   const initials = getCustomerInitials(customer.name);
 
   return (
-    <div className="container mx-auto max-w-7xl p-4 md:p-8">
+    <div className="container mx-auto min-w-0 max-w-7xl p-4 md:p-8">
       <nav className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="text-sm text-slate-500">
           <Link to="/" className="hover:text-slate-900">
@@ -197,15 +193,15 @@ export default function CustomerPage() {
         </Link>
       </nav>
 
-      <header className="mb-8 flex items-center gap-4">
+      <header className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center">
         <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-blue-100 text-lg font-semibold text-blue-700">
           {initials}
         </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <div className="min-w-0">
+          <h1 className="break-words text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
             {customer.name}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">{customer.company}</p>
+          <p className="mt-1 break-words text-sm text-slate-500">{customer.company}</p>
         </div>
       </header>
 
@@ -234,11 +230,12 @@ export default function CustomerPage() {
           error={error}
         />
 
-        {!loading && !error && invoices.meta.totalPages > 0 && (
+        {!loading && !error && (
           <PaginationControls
             page={page}
             totalPages={invoices.meta.totalPages}
             totalItems={invoices.meta.total}
+            pageSize={invoices.meta.limit ?? PAGE_LIMIT}
             setPage={setPage}
           />
         )}

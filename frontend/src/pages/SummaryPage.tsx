@@ -130,9 +130,9 @@ export default function SummaryPage() {
 
   if (pageError && invoiceCount == null && customerCount == null) {
     return (
-      <div className="container mx-auto max-w-7xl p-4 md:p-8">
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+      <div className="container mx-auto min-w-0 max-w-7xl p-4 md:p-8">
+        <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             Summary / Analytics
           </h1>
           <Link to="/">
@@ -149,9 +149,9 @@ export default function SummaryPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl p-4 md:p-8">
-      <header className="mb-8 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+    <div className="container mx-auto min-w-0 max-w-7xl p-4 md:p-8">
+      <header className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           Summary / Analytics
         </h1>
         <Link to="/">
@@ -161,7 +161,7 @@ export default function SummaryPage() {
         </Link>
       </header>
 
-      <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="mb-8 grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           label="Total billed"
           value={totalBilled == null ? "—" : formatCurrency(totalBilled)}

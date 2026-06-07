@@ -1,11 +1,8 @@
-import type { CustomerStatusChip, CustomerStatusCounts, Invoice } from "@/types/api";
+import type { CustomerStatusCounts, Invoice, InvoiceStatus } from "@/types/api";
+import { INVOICE_STATUS_OPTIONS } from "@/utils/invoice";
 
-const STATUS_CHIPS: CustomerStatusChip[] = [
-  "Paid",
-  "Unpaid",
-  "Overdue",
-  "Draft",
-];
+export const customerNameToSlug = (name: string): string =>
+  name.trim().toLowerCase().replace(/\s+/g, "-");
 
 export const getCustomerInitials = (name: string): string => {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -27,29 +24,37 @@ export const formatCurrency = (value: number): string =>
     maximumFractionDigits: 2,
   })}`;
 
+export const createEmptyStatusCounts = (): CustomerStatusCounts =>
+  Object.fromEntries(
+    INVOICE_STATUS_OPTIONS.map((status) => [status, 0])
+  ) as CustomerStatusCounts;
+
 export const computeStatusCounts = (
   invoices: Invoice[]
 ): CustomerStatusCounts => {
-  const counts: CustomerStatusCounts = {
-    Paid: 0,
-    Unpaid: 0,
-    Overdue: 0,
-    Draft: 0,
-  };
+  const counts = createEmptyStatusCounts();
 
   invoices.forEach((invoice) => {
     if (invoice.status in counts) {
-      counts[invoice.status as CustomerStatusChip] += 1;
+      counts[invoice.status] += 1;
     }
   });
 
   return counts;
 };
 
+export const getVisibleStatusCounts = (
+  counts: CustomerStatusCounts
+): Array<{ status: InvoiceStatus; count: number }> =>
+  INVOICE_STATUS_OPTIONS.filter((status) => counts[status] > 0).map(
+    (status) => ({
+      status,
+      count: counts[status],
+    })
+  );
+
 export const computeTotalTax = (invoices: Invoice[]): number =>
   invoices.reduce((sum, invoice) => sum + Number(invoice.tax || 0), 0);
-
-export const CUSTOMER_STATUS_CHIPS = STATUS_CHIPS;
 
 export const getApiErrorMessage = (error: unknown): string => {
   if (

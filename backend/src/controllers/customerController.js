@@ -15,7 +15,7 @@ export const getCustomers = async (req, res, next) => {
 
 export const getCustomerById = async (req, res, next) => {
   try {
-    const result = await getCustomerDetail(req.params.customerId, req.query);
+    const result = await getCustomerDetail(req.params.identifier, req.query);
 
     res.status(200).json({
       success: true,

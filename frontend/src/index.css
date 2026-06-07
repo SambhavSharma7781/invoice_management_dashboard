@@ -2,12 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    overflow-x: clip;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100%;
+  }
+
+  a {
+    @apply cursor-pointer;
+  }
+
+  button:not(:disabled) {
+    @apply cursor-pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  input:disabled {
+    @apply cursor-not-allowed;
+  }
+
+  select:not(:disabled) {
+    @apply cursor-pointer;
+  }
+
+  input[type="date"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+
+  input[type="search"]:not(:disabled),
+  input[type="text"]:not(:disabled),
+  input[type="number"]:not(:disabled) {
+    @apply cursor-text;
+  }
+
+  label {
+    @apply cursor-default;
+  }
+}
+
 html,
 body,
 #root {
   min-height: 100%;
-}
-
-body {
-  margin: 0;
 }

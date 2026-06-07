@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { customerNameToSlug } from "@/utils/customer";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
 import { Badge } from "@/components/ui/Badge";
@@ -17,7 +18,7 @@ function SortableHeader({ label, active, direction, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1 text-left font-medium text-slate-600 hover:text-slate-900"
+      className="inline-flex cursor-pointer items-center gap-1 text-left font-medium text-slate-600 hover:text-slate-900"
     >
       <span>{label}</span>
       <span className="text-[10px] text-slate-400">
@@ -65,8 +66,7 @@ export function InvoiceTable({
   };
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
+    <Table containerClassName="px-4 sm:px-6" className="min-w-[720px]">
         <TableHeader>
           <TableRow className="border-b border-slate-100 bg-slate-50/80 hover:bg-slate-50/80">
             <TableHead className="px-4 py-3">
@@ -142,7 +142,7 @@ export function InvoiceTable({
               </TableCell>
 
               <TableCell className="px-4 py-3 text-right">
-                <div className="flex justify-end gap-2">
+                <div className="flex flex-wrap justify-end gap-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -153,7 +153,9 @@ export function InvoiceTable({
                     Edit
                   </Button>
 
-                  <Link to={`/customers/${invoice.customerId?._id}`}>
+                  <Link
+                    to={`/customers/${customerNameToSlug(invoice.customerId?.name ?? "")}`}
+                  >
                     <Button
                       variant="outline"
                       size="sm"
@@ -168,6 +170,5 @@ export function InvoiceTable({
           ))}
         </TableBody>
       </Table>
-    </div>
   );
 }

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { FilterPopover } from "@/components/FilterPopover";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
 
 const STATUS_OPTIONS = [
   "Draft",
@@ -14,45 +15,188 @@ const STATUS_OPTIONS = [
 
 const TAX_RATE_OPTIONS = ["0", "3", "5", "18", "28"];
 
+const SORT_OPTIONS = [
+  { value: "amount", label: "Amount" },
+  { value: "issueDate", label: "Issue Date" },
+  { value: "dueDate", label: "Due Date" },
+];
+
 const filterButtonClass = (active) =>
   [
-    "h-9 rounded-lg border px-3 text-sm font-medium shadow-none",
+    "h-9 cursor-pointer rounded-lg border px-3 text-sm font-medium shadow-none",
     active
       ? "border-blue-500 bg-blue-50 text-blue-700"
       : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
   ].join(" ");
 
-function FilterPopover({ open, onClose, children, className = "" }) {
-  const panelRef = useRef(null);
+const chipClass = (active) =>
+  [
+    "cursor-pointer rounded-lg border px-3 py-2 text-left text-sm transition-colors",
+    active
+      ? "border-blue-500 bg-blue-50 text-blue-700"
+      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+  ].join(" ");
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
+function FilterSectionLabel({ children }) {
+  return (
+    <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+      {children}
+    </p>
+  );
+}
 
-    const handleClickOutside = (event) => {
-      if (panelRef.current && !panelRef.current.contains(event.target)) {
-        onClose();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [open, onClose]);
-
-  if (!open) {
-    return null;
-  }
+function StatusFilterOptions({ value, onChange }) {
+  const toggleStatus = (status) => {
+    onChange(
+      value.includes(status)
+        ? value.filter((item) => item !== status)
+        : [...value, status]
+    );
+  };
 
   return (
-    <div
-      ref={panelRef}
-      className={`absolute left-0 top-[calc(100%+0.5rem)] z-50 min-w-[16rem] rounded-lg border border-slate-200 bg-white p-4 shadow-lg ${className}`}
-    >
-      {children}
+    <div className="flex flex-wrap gap-2">
+      {STATUS_OPTIONS.map((status) => (
+        <button
+          key={status}
+          type="button"
+          className={chipClass(value.includes(status))}
+          onClick={() => toggleStatus(status)}
+        >
+          {status}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function CustomerFilterOptions({ customers, value, onChange }) {
+  return (
+    <div className="rounded-lg border border-slate-200">
+      <button
+        type="button"
+        className={`${chipClass(!value)} block w-full rounded-none border-0 border-b border-slate-100 px-3 py-2.5 text-left`}
+        onClick={() => onChange("")}
+      >
+        All Customers
+      </button>
+      {customers.map((customer) => (
+        <button
+          key={customer._id}
+          type="button"
+          className={`${chipClass(value === customer._id)} block w-full rounded-none border-0 border-b border-slate-100 px-3 py-2.5 text-left last:border-b-0`}
+          onClick={() => onChange(customer._id)}
+        >
+          <span className="block truncate font-medium">{customer.name}</span>
+          <span className="block truncate text-xs text-slate-500">
+            {customer.company}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function TaxRateFilterOptions({ value, onChange }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <button
+        type="button"
+        className={chipClass(!value)}
+        onClick={() => onChange("")}
+      >
+        All rates
+      </button>
+      {TAX_RATE_OPTIONS.map((rate) => (
+        <button
+          key={rate}
+          type="button"
+          className={chipClass(value === rate)}
+          onClick={() => onChange(rate)}
+        >
+          {rate}%
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SortFilterOptions({ sortBy, sortOrder, onSortByChange, onSortOrderChange }) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <FilterSectionLabel>Sort by</FilterSectionLabel>
+        <div className="flex flex-wrap gap-2">
+          {SORT_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={chipClass(sortBy === option.value)}
+              onClick={() => onSortByChange(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <FilterSectionLabel>Order</FilterSectionLabel>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className={chipClass(sortOrder === "asc")}
+            onClick={() => onSortOrderChange("asc")}
+          >
+            Ascending
+          </button>
+          <button
+            type="button"
+            className={chipClass(sortOrder === "desc")}
+            onClick={() => onSortOrderChange("desc")}
+          >
+            Descending
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatusFilterPanel({ filters, setFilters, customers }) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <FilterSectionLabel>Status</FilterSectionLabel>
+        <StatusFilterOptions
+          value={filters.status}
+          onChange={(status) =>
+            setFilters((previous) => ({ ...previous, status }))
+          }
+        />
+      </div>
+
+      <div>
+        <FilterSectionLabel>Customer</FilterSectionLabel>
+        <CustomerFilterOptions
+          customers={customers}
+          value={filters.customerId}
+          onChange={(customerId) =>
+            setFilters((previous) => ({ ...previous, customerId }))
+          }
+        />
+      </div>
+
+      <SortFilterOptions
+        sortBy={filters.sortBy}
+        sortOrder={filters.sortOrder}
+        onSortByChange={(sortBy) =>
+          setFilters((previous) => ({ ...previous, sortBy }))
+        }
+        onSortOrderChange={(sortOrder) =>
+          setFilters((previous) => ({ ...previous, sortOrder }))
+        }
+      />
     </div>
   );
 }
@@ -68,22 +212,13 @@ export function InvoiceFilters({
   onReset,
 }) {
   const [openPanel, setOpenPanel] = useState(null);
+  const isMobile = useIsMobileViewport();
+  const statusTriggerRef = useRef(null);
+  const taxTriggerRef = useRef(null);
+  const dateTriggerRef = useRef(null);
 
   const handleChange = (event) => {
-    const { name, value, multiple, options } = event.target;
-
-    if (multiple) {
-      const selectedValues = Array.from(options)
-        .filter((option) => option.selected)
-        .map((option) => option.value);
-
-      setFilters((previous) => ({
-        ...previous,
-        [name]: selectedValues,
-      }));
-
-      return;
-    }
+    const { name, value } = event.target;
 
     setFilters((previous) => ({
       ...previous,
@@ -109,23 +244,24 @@ export function InvoiceFilters({
   };
 
   return (
-    <div className="relative z-30 overflow-visible border-b border-slate-100 px-4 py-4 sm:px-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+    <div className="relative z-30 border-b border-slate-100 px-4 py-4 sm:px-6">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <div className="min-w-0 flex-1">
           <Input
             type="search"
             placeholder="Search invoice / customer"
             value={searchQuery}
             onChange={(event) => onSearchChange(event.target.value)}
-            className="h-9 rounded-lg border-slate-200 bg-white shadow-none"
+            className="h-9 w-full rounded-lg border-slate-200 bg-white shadow-none"
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+          <div className="relative min-w-0">
             <button
+              ref={statusTriggerRef}
               type="button"
-              className={filterButtonClass(statusActive)}
+              className={`${filterButtonClass(statusActive)} w-full sm:w-auto`}
               onClick={() => togglePanel("status")}
             >
               Status
@@ -135,83 +271,25 @@ export function InvoiceFilters({
             <FilterPopover
               open={openPanel === "status"}
               onClose={() => setOpenPanel(null)}
-              className="right-0 left-auto min-w-[14rem]"
+              triggerRef={statusTriggerRef}
+              title={isMobile ? "Filters" : undefined}
+              align="start"
+              preferredWidth={360}
+              preferredMaxHeight={480}
             >
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-                Status
-              </p>
-              <Select
-                name="status"
-                multiple
-                size={6}
-                value={filters.status}
-                onChange={handleChange}
-                className="h-auto py-1"
-              >
-                {STATUS_OPTIONS.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </Select>
-
-              <div className="mt-4">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-                  Customer
-                </p>
-                <Select
-                  name="customerId"
-                  value={filters.customerId}
-                  onChange={handleChange}
-                >
-                  <option value="">All Customers</option>
-                  {customers.map((customer) => (
-                    <option key={customer._id} value={customer._id}>
-                      {customer.name} ({customer.company})
-                    </option>
-                  ))}
-                </Select>
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div>
-                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Sort by
-                  </p>
-                  <Select
-                    name="sortBy"
-                    value={filters.sortBy}
-                    onChange={handleChange}
-                  >
-                    <option value="invoiceId">Invoice ID</option>
-                    <option value="customerName">Customer Name</option>
-                    <option value="amount">Amount</option>
-                    <option value="total">Total</option>
-                    <option value="issueDate">Issue Date</option>
-                    <option value="dueDate">Due Date</option>
-                  </Select>
-                </div>
-                <div>
-                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Order
-                  </p>
-                  <Select
-                    name="sortOrder"
-                    value={filters.sortOrder}
-                    onChange={handleChange}
-                  >
-                    <option value="asc">Ascending</option>
-                    <option value="desc">Descending</option>
-                  </Select>
-                </div>
-              </div>
+              <StatusFilterPanel
+                filters={filters}
+                setFilters={setFilters}
+                customers={customers}
+              />
             </FilterPopover>
           </div>
 
-          <div className="relative">
+          <div className="relative min-w-0">
             <button
+              ref={taxTriggerRef}
               type="button"
-              className={filterButtonClass(taxActive)}
+              className={`${filterButtonClass(taxActive)} w-full sm:w-auto`}
               onClick={() => togglePanel("tax")}
             >
               Tax rate
@@ -220,29 +298,23 @@ export function InvoiceFilters({
             <FilterPopover
               open={openPanel === "tax"}
               onClose={() => setOpenPanel(null)}
-              className="right-0 left-auto"
+              triggerRef={taxTriggerRef}
+              title={isMobile ? "Tax rate" : undefined}
+              align="end"
+              preferredWidth={176}
             >
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-                Tax rate
-              </p>
-              <Select
+              <TaxRateFilterOptions
                 value={taxRateFilter}
-                onChange={(event) => onTaxRateFilterChange(event.target.value)}
-              >
-                <option value="">All rates</option>
-                {TAX_RATE_OPTIONS.map((rate) => (
-                  <option key={rate} value={rate}>
-                    {rate}%
-                  </option>
-                ))}
-              </Select>
+                onChange={onTaxRateFilterChange}
+              />
             </FilterPopover>
           </div>
 
-          <div className="relative">
+          <div className="relative min-w-0">
             <button
+              ref={dateTriggerRef}
               type="button"
-              className={filterButtonClass(dateActive)}
+              className={`${filterButtonClass(dateActive)} w-full sm:w-auto`}
               onClick={() => togglePanel("date")}
             >
               Date
@@ -251,7 +323,10 @@ export function InvoiceFilters({
             <FilterPopover
               open={openPanel === "date"}
               onClose={() => setOpenPanel(null)}
-              className="right-0 left-auto min-w-[18rem]"
+              triggerRef={dateTriggerRef}
+              title={isMobile ? "Date filters" : undefined}
+              align="end"
+              preferredWidth={288}
             >
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
@@ -263,6 +338,7 @@ export function InvoiceFilters({
                     name="issueDateFrom"
                     value={filters.issueDateFrom}
                     onChange={handleChange}
+                    className="w-full"
                   />
                 </div>
                 <div>
@@ -274,6 +350,7 @@ export function InvoiceFilters({
                     name="issueDateTo"
                     value={filters.issueDateTo}
                     onChange={handleChange}
+                    className="w-full"
                   />
                 </div>
                 <div>
@@ -285,6 +362,7 @@ export function InvoiceFilters({
                     name="dueDateFrom"
                     value={filters.dueDateFrom}
                     onChange={handleChange}
+                    className="w-full"
                   />
                 </div>
                 <div>
@@ -296,6 +374,7 @@ export function InvoiceFilters({
                     name="dueDateTo"
                     value={filters.dueDateTo}
                     onChange={handleChange}
+                    className="w-full"
                   />
                 </div>
               </div>
@@ -307,7 +386,7 @@ export function InvoiceFilters({
             variant="ghost"
             size="sm"
             onClick={handleReset}
-            className="h-9 px-2 text-slate-500"
+            className="col-span-2 h-9 px-2 text-slate-500 sm:col-span-1"
           >
             Reset
           </Button>

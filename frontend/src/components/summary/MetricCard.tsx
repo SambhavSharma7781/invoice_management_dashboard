@@ -11,7 +11,7 @@ export function MetricCard({ label, value, loading = false }: MetricCardProps) {
       {loading ? (
         <div className="mt-2 h-8 w-28 animate-pulse rounded bg-slate-100" />
       ) : (
-        <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+        <p className="mt-1 break-words text-xl font-semibold tracking-tight text-slate-900 tabular-nums sm:text-2xl">
           {value}
         </p>
       )}

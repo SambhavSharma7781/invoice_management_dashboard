@@ -4,6 +4,6 @@ import { getCustomerById, getCustomers } from "../controllers/customerController
 const router = Router();
 
 router.get("/", getCustomers);
-router.get("/:customerId", getCustomerById);
+router.get("/:identifier", getCustomerById);
 
 export default router;

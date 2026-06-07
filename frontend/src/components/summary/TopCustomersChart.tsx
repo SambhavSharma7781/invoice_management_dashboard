@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import type { TopCustomerSummary } from "@/types/api";
-import { formatCurrency } from "@/utils/customer";
+import { formatCurrency, customerNameToSlug } from "@/utils/customer";
 
 interface TopCustomersChartProps {
   customers: TopCustomerSummary[];
@@ -25,7 +25,7 @@ export function TopCustomersChart({
 }: TopCustomersChartProps) {
   if (loading) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div className="mb-4 h-5 w-48 animate-pulse rounded bg-slate-100" />
         <div className="divide-y divide-slate-100">
           {Array.from({ length: 5 }).map((_, index) => (
@@ -70,11 +70,11 @@ export function TopCustomersChart({
           return (
             <div
               key={entry.customer._id}
-              className="flex items-center gap-4 py-3"
+              className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:gap-4"
             >
               <Link
-                to={`/customers/${entry.customer._id}`}
-                className="w-36 shrink-0 truncate text-sm font-medium text-slate-900 hover:text-blue-600 sm:w-44"
+                to={`/customers/${customerNameToSlug(entry.customer.name)}`}
+                className="min-w-0 truncate text-sm font-medium text-slate-900 hover:text-blue-600 sm:w-36 md:w-44"
               >
                 {entry.customer.name}
               </Link>
@@ -86,7 +86,7 @@ export function TopCustomersChart({
                 />
               </div>
 
-              <span className="w-24 shrink-0 text-right text-sm font-semibold text-slate-900 sm:w-28">
+              <span className="shrink-0 text-left text-sm font-semibold text-slate-900 tabular-nums sm:w-24 sm:text-right md:w-28">
                 {formatCurrency(entry.totalRevenue)}
               </span>
             </div>

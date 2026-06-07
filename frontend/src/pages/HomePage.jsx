@@ -263,9 +263,9 @@ export default function HomePage() {
   };
 
   return (
-    <div className="container mx-auto max-w-7xl p-4 md:p-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+    <div className="container mx-auto min-w-0 max-w-7xl p-4 md:p-8">
+      <header className="mb-6 sm:mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           Invoice Management Dashboard
         </h1>
         {totalInvoices != null ? (
@@ -275,13 +275,13 @@ export default function HomePage() {
         ) : null}
       </header>
 
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm">
         <header className="flex flex-col gap-4 border-b border-slate-100 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
             Invoices
           </h1>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">
             <Link to="/summary">
               <Button
                 type="button"

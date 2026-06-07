@@ -42,11 +42,47 @@ export const listCustomers = async () => {
     return customers;
 };
 
-export const getCustomerDetail = async (customerId, query) => {
-    if (!mongoose.Types.ObjectId.isValid(customerId)) {
-        throw createQueryError("Invalid customerId");
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const slugToName = (slug) => slug.replace(/-/g, " ").trim();
+
+const findCustomerByIdentifier = async (identifier) => {
+    if (!identifier || typeof identifier !== "string") {
+        throw createQueryError("Invalid customer identifier");
     }
 
+    if (mongoose.Types.ObjectId.isValid(identifier)) {
+        const customerById = await Customer.findById(identifier)
+            .select("_id name company")
+            .lean();
+
+        if (customerById) {
+            return customerById;
+        }
+    }
+
+    const nameFromSlug = slugToName(decodeURIComponent(identifier));
+
+    if (!nameFromSlug) {
+        throw createQueryError("Invalid customer identifier");
+    }
+
+    const customer = await Customer.findOne({
+        name: {
+            $regex: new RegExp(`^${escapeRegex(nameFromSlug)}$`, "i"),
+        },
+    })
+        .select("_id name company")
+        .lean();
+
+    if (!customer) {
+        throw createNotFoundError("Customer not found", "CUSTOMER_NOT_FOUND");
+    }
+
+    return customer;
+};
+
+export const getCustomerDetail = async (identifier, query) => {
     const page = parsePositiveInt(query.page, "page", DEFAULT_PAGE);
     const limitInput = parsePositiveInt(query.limit, "limit", DEFAULT_LIMIT);
 
@@ -55,15 +91,8 @@ export const getCustomerDetail = async (customerId, query) => {
     }
 
     const limit = limitInput;
-    const customerObjectId = new mongoose.Types.ObjectId(customerId);
-
-    const customer = await Customer.findById(customerObjectId)
-        .select("_id name company")
-        .lean();
-
-    if (!customer) {
-        throw createNotFoundError("Customer not found", "CUSTOMER_NOT_FOUND");
-    }
+    const customer = await findCustomerByIdentifier(identifier);
+    const customerObjectId = customer._id;
 
     const [totalInvoices, invoices, metricsResult] = await Promise.all([
         Invoice.countDocuments({ customerId: customerObjectId }),

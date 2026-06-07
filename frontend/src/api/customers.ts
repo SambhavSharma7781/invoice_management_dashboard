@@ -21,24 +21,24 @@ export async function getCustomers(): Promise<CustomerListResponse> {
   return data;
 }
 
-export async function getCustomerById(
-  customerId: string,
+export async function getCustomerBySlug(
+  slug: string,
   params?: CustomerDetailParams
 ): Promise<CustomerDetailResponse> {
   const { data } = await apiClient.get<CustomerDetailResponse>(
-    `/api/customers/${customerId}`,
+    `/api/customers/${encodeURIComponent(slug)}`,
     { params }
   );
   return data;
 }
 
-export async function fetchAllCustomerInvoices(customerId: string) {
+export async function fetchAllCustomerInvoices(slug: string) {
   const allInvoices: CustomerDetail["invoices"]["data"] = [];
   let page = 1;
   let totalPages = 1;
 
   do {
-    const response = await getCustomerById(customerId, { page, limit: 100 });
+    const response = await getCustomerBySlug(slug, { page, limit: 100 });
     allInvoices.push(...response.data.invoices.data);
     totalPages = response.data.invoices.meta.totalPages;
     page += 1;
