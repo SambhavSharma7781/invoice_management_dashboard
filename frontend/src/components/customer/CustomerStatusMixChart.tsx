@@ -36,7 +36,7 @@ function RevenueBreakdown({
   ];
 
   return (
-    <div className="min-w-0 flex-1">
+    <div className="min-w-0 w-full flex-1">
       <h3 className="mb-3 text-sm font-semibold text-slate-900">
         Revenue breakdown
       </h3>
@@ -72,8 +72,6 @@ interface StatusSlice {
   count: number;
 }
 
-const CHART_SIZE = 280;
-
 export function CustomerStatusMixChart({
   counts,
   metrics,
@@ -83,21 +81,18 @@ export function CustomerStatusMixChart({
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-4 h-5 w-24 animate-pulse rounded bg-slate-100" />
-        <div className="flex min-w-0 items-center gap-4">
-          <div
-            className="shrink-0 animate-pulse rounded-full bg-slate-100"
-            style={{ width: CHART_SIZE, height: CHART_SIZE }}
-          />
-          <div className="shrink-0 space-y-2.5">
+        <div className="flex min-w-0 flex-col items-stretch gap-6 md:flex-row md:items-center md:gap-4">
+          <div className="mx-auto aspect-square w-full max-w-[280px] shrink-0 animate-pulse rounded-full bg-slate-100 md:mx-0 md:h-[280px] md:w-[280px] md:max-w-none" />
+          <div className="w-full space-y-2.5 md:w-auto md:shrink-0">
             {Array.from({ length: 4 }).map((_, index) => (
               <div
                 key={index}
-                className="h-4 w-32 animate-pulse rounded bg-slate-100"
+                className="h-4 w-full max-w-xs animate-pulse rounded bg-slate-100 md:w-32"
               />
             ))}
           </div>
-          <div className="w-px self-stretch bg-slate-200" />
-          <div className="min-w-0 flex-1 space-y-3">
+          <div className="hidden w-px self-stretch bg-slate-200 md:block" />
+          <div className="min-w-0 w-full flex-1 space-y-3">
             <div className="h-4 w-36 animate-pulse rounded bg-slate-100" />
             {Array.from({ length: 3 }).map((_, index) => (
               <div key={index} className="space-y-1.5">
@@ -127,21 +122,9 @@ export function CustomerStatusMixChart({
     <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="mb-4 text-lg font-semibold text-slate-900">Status mix</h2>
 
-      <div className="flex min-w-0 items-center gap-4">
-        <div
-          className="relative shrink-0 overflow-visible"
-          style={{
-            width: CHART_SIZE,
-            height: CHART_SIZE,
-            minWidth: CHART_SIZE,
-            minHeight: CHART_SIZE,
-          }}
-        >
-          <ResponsiveContainer
-            width={CHART_SIZE}
-            height={CHART_SIZE}
-            minHeight={CHART_SIZE}
-          >
+      <div className="flex min-w-0 flex-col items-stretch gap-6 md:flex-row md:items-center md:gap-4">
+        <div className="relative mx-auto aspect-square w-full max-w-[280px] shrink-0 overflow-visible md:mx-0 md:h-[280px] md:w-[280px] md:max-w-none">
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
               <Pie
                 data={slices}
@@ -171,7 +154,7 @@ export function CustomerStatusMixChart({
           </div>
         </div>
 
-        <ul className="flex shrink-0 flex-col justify-center gap-2">
+        <ul className="flex w-full flex-col justify-center gap-2 md:w-auto md:shrink-0">
           {slices.map((slice) => (
             <li
               key={slice.status}
@@ -188,7 +171,10 @@ export function CustomerStatusMixChart({
           ))}
         </ul>
 
-        <div className="w-px self-stretch bg-slate-200" aria-hidden="true" />
+        <div
+          className="hidden w-px self-stretch bg-slate-200 md:block"
+          aria-hidden="true"
+        />
 
         <RevenueBreakdown
           paidRevenue={metrics.paidRevenue}
