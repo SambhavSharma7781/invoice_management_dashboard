@@ -239,3 +239,25 @@ Both are derived values (`tax = amount × taxRate / 100`, `total = amount + tax`
 - **Customer profile** — company info, metric cards, status mix donut chart, revenue breakdown, full paginated invoice history
 - **Create invoice** — form with auto-generated invoice ID, customer dropdown with company auto-fill, computed tax and total preview
 - **Edit invoice** — pre-filled form, read-only invoice ID
+
+---
+
+## Docker Setup (Optional)
+
+Run the entire stack with one command:
+
+```bash
+docker compose up --build
+```
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:5173 |
+| Backend | http://localhost:4000 |
+| MongoDB | localhost:27017 |
+
+To seed data inside Docker:
+
+```bash
+docker compose exec backend npm run seed
+```
